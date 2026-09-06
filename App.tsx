@@ -5,41 +5,40 @@
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import {useEffect, useRef} from 'react';
+import {StatusBar} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {AppNavigator} from './src/navigation/AppNavigator';
+import {useAuth} from './src/hooks/useAuth';
+import {useNetworkSync} from './src/hooks/useNetworkSync';
+import {stopBackgroundLocation} from './src/background/backgroundLocationService';
+import {setDutyState} from './src/storage/locationStorage';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const {user, initializing, configurationError} = useAuth();
+  const previousUid = useRef<string | null>(null);
+  useNetworkSync(user?.uid);
+
+  useEffect(() => {
+    const oldUid = previousUid.current;
+    if (oldUid && oldUid !== user?.uid) {
+      void setDutyState(oldUid, false)
+        .then(stopBackgroundLocation)
+        .catch(error => console.warn('Auth cleanup failed', error));
+    }
+    previousUid.current = user?.uid ?? null;
+  }, [user?.uid]);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAFBFA" />
+      <AppNavigator
+        user={user}
+        initializing={initializing}
+        configurationError={configurationError}
+      />
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;

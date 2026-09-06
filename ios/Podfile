@@ -14,8 +14,29 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
+post_integrate do |installer|
+  # FirebaseFirestoreInternal is built and linked as a static library. With
+  # modular headers CocoaPods 1.16 also emits a redundant weak-framework flag,
+  # which makes ld search for a framework that does not exist.
+  support_files = installer.sandbox.root.join('Target Support Files', 'Pods-DeliveryRiderApp')
+  Dir.glob(support_files.join('Pods-DeliveryRiderApp.*.xcconfig')).each do |xcconfig|
+    contents = File.read(xcconfig)
+    File.write(xcconfig, contents.gsub(' -weak_framework "FirebaseFirestoreInternal"', ''))
+  end
+end
+
 target 'DeliveryRiderApp' do
   config = use_native_modules!
+
+  # Firebase's Swift pods need module maps for these Objective-C dependencies.
+  # Keep this scoped: global modular headers cause duplicate React Native modules.
+  pod 'FirebaseAppCheckInterop', :modular_headers => true
+  pod 'FirebaseAuthInterop', :modular_headers => true
+  pod 'FirebaseCoreExtension', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'FirebaseFirestoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'RecaptchaInterop', :modular_headers => true
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -31,5 +52,15 @@ target 'DeliveryRiderApp' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # FirebaseAuth is a Swift pod, but RNFirebase's Objective-C umbrella import
+    # expects its generated compatibility header in CocoaPods' public headers.
+    # Publish it after FirebaseAuth compiles so dependent RNFB targets can see it.
+    firebase_auth_target = installer.pods_project.targets.find { |target| target.name == 'FirebaseAuth' }
+    if firebase_auth_target && !firebase_auth_target.shell_script_build_phases.any? { |phase| phase.name == '[RNFirebase] Expose FirebaseAuth Swift header' }
+      phase = firebase_auth_target.new_shell_script_build_phase('[RNFirebase] Expose FirebaseAuth Swift header')
+      phase.shell_script = 'ln -sf "${DERIVED_SOURCES_DIR}/FirebaseAuth-Swift.h" "${PODS_ROOT}/Headers/Public/FirebaseAuth/FirebaseAuth-Swift.h"'
+    end
+
   end
 end

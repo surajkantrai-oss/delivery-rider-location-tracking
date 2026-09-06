@@ -55,6 +55,11 @@ yarn-error.log
 
 # Bundle artifact
 *.jsbundle
+*.apk
+
+# Local verification captures
+android-home.png
+android-launch.png
 
 # Ruby / CocoaPods
 **/Pods/
@@ -65,6 +70,16 @@ yarn-error.log
 
 # testing
 /coverage
+
+# Firebase configuration is supplied by each environment
+android/app/google-services.json
+ios/GoogleService-Info.plist
+ios/DeliveryRiderApp/GoogleService-Info.plist
+
+# Local environment files
+.env
+.env.*
+!.env.example
 
 # Yarn
 .yarn/*
