@@ -48,10 +48,12 @@ cd DeliveryRiderApp
 npm install
 ```
 
-Add Firebase configuration (these files are intentionally gitignored):
+The Android Firebase client configuration is included so Android builds work
+after cloning. For iOS, download the configuration from the same Firebase
+project after registering the iOS bundle identifier:
 
-- Android: `android/app/google-services.json`
-- iOS: `ios/DeliveryRiderApp/GoogleService-Info.plist`
+- Android (included): `android/app/google-services.json`
+- iOS (environment-specific): `ios/DeliveryRiderApp/GoogleService-Info.plist`
 
 For iOS, drag `GoogleService-Info.plist` into the `DeliveryRiderApp` target in Xcode with “Copy items if needed” and target membership enabled. Then:
 
@@ -76,7 +78,8 @@ Before `npm run android`, start an Android Virtual Device in Android Studio's De
 
 1. Create a Firebase project.
 2. Register Android app ID `com.deliveryriderapp` and the iOS bundle identifier shown in Xcode.
-3. Download and place both configuration files.
+3. Use the included Android configuration. Download and place the iOS
+   configuration when building for iOS.
 4. Enable Email/Password in Firebase Authentication.
 5. Create Cloud Firestore.
 6. Deploy `firestore.rules` using `firebase deploy --only firestore:rules` or the Firebase console.

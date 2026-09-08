@@ -71,8 +71,8 @@ android-launch.png
 # testing
 /coverage
 
-# Firebase configuration is supplied by each environment
-android/app/google-services.json
+# Android Firebase client configuration is committed so a clone can run.
+# iOS configuration must be downloaded after registering the iOS bundle ID.
 ios/GoogleService-Info.plist
 ios/DeliveryRiderApp/GoogleService-Info.plist
 
